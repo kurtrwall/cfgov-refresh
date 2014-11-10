@@ -1,8 +1,9 @@
 import nose
+import os
 from nose.plugins.attrib import attr
 
 from selenose.cases import SeleniumTestCase
-
+from flask.ext.testing import LiveServerTestCase
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
@@ -10,7 +11,20 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from .test_helpers import *
 
-class NewsroomTestCase(SeleniumTestCase):
+from sheer.wsgi import app_with_config
+
+class NewsroomTestCase(SeleniumTestCase, LiveServerTestCase):
+
+    def create_app(self):
+        # Setup server
+        config = {'debug': False, 
+                  'index': 'cfgov_test', 
+                  'elasticsearch': [{'host': 'localhost', 'port': 9200}], 
+                  'location': os.getcwd()}
+        application = app_with_config(config)
+        application.config['LIVESERVER_PORT'] = 7000
+        return application
+
     def setUp(self):
         self.driver.set_window_size(1400, 850)
         self.driver.get('http://refresh.demo.cfpb.gov/newsroom/')
