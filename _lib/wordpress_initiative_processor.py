@@ -41,11 +41,11 @@ def process_initiative(item):
     
     for x in xrange(0,6):
         subinitiative = {}
-        fields = ['header', 'desc']
+        fields = ['header', 'desc', 'page_content']
         subinitiative_links = []
         
         for field in fields:
-            field_name = 'subinitiative_%s_%s' % (field, str(x))
+            field_name = 'subinitiative_%s_%s' % (str(x), field)
             if field_name in custom_fields and custom_fields[field_name][0] != '':
                 subinitiative[field] = custom_fields[field_name][0]
                 
