@@ -67,13 +67,6 @@ TEMPLATES = [
         }
     },
     {
-        'NAME': 'sheerlike-env',
-        'BACKEND': 'django.template.backends.jinja2.Jinja2',
-        'OPTIONS': {
-            'environment': 'sheerlike.environment'
-        }
-    },
-    {
         'NAME': 'wagtail-env',
         'BACKEND': 'django.template.backends.jinja2.Jinja2',
         'DIRS': [Path(os.path.dirname(__file__)).ancestor(2) + '/v1/jinja2/v1'],
