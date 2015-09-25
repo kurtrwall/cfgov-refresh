@@ -2,12 +2,12 @@ import os
 from unipath import Path
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
 SECRET_KEY = os.environ.get('SECRET_KEY', os.urandom(32))
 
 # Application definition
 
 INSTALLED_APPS = (
-    'v1',
     'wagtail.wagtailforms',
     'wagtail.wagtailredirects',
     'wagtail.wagtailembeds',
@@ -30,6 +30,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'v1',
     'core',
     'sheerlike',
 )
@@ -55,7 +56,7 @@ ROOT_URLCONF = 'cfgov.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [PROJECT_ROOT + '/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -67,9 +68,16 @@ TEMPLATES = [
         }
     },
     {
+        'NAME': 'sheerlike-env',
+        'BACKEND': 'django.template.backends.jinja2.Jinja2',
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'environment': 'sheerlike.environment'
+        }
+    },
+    {
         'NAME': 'wagtail-env',
         'BACKEND': 'django.template.backends.jinja2.Jinja2',
-        'DIRS': [Path(os.path.dirname(__file__)).ancestor(2) + '/v1/jinja2/v1'],
         'APP_DIRS': True,
         'OPTIONS': {
             'environment': 'v1.environment'
@@ -107,9 +115,24 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
-
 STATIC_URL = '/static/'
-STATIC_ROOT = '/static/'
+
+# Absolute path to the directory static files should be collected to.
+STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
+
+# List of finder classes that know how to find static files in
+# various locations.
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+)
+
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+
+# Used to include directories not traditionally found app-specific 'static' directories
+STATICFILES_DIRS = (
+    ("legacy", Path(os.path.dirname(__file__)).ancestor(2) + "/v1/static-legacy"),
+)
 
 ALLOWED_HOSTS = ['*']
 
@@ -119,6 +142,7 @@ WAGTAIL_SITE_NAME = "v1"
 
 # Sheer related settings
 
-SHEER_SITES = [Path(os.path.dirname(__file__)).ancestor(2) + '/v1/jinja2/v1', Path(__file__).ancestor(4).child('docs')]
+SHEER_SITES = [Path(os.path.dirname(__file__)).ancestor(2) + '/v1/jinja2/v1',
+               Path(__file__).ancestor(4).child('docs'), STATIC_ROOT]
 SHEER_ELASTICSEARCH_SERVER = os.environ.get('ES_HOST', 'localhost') + ':' + os.environ.get('ES_PORT', '9200')
 SHEER_ELASTICSEARCH_INDEX = os.environ.get('SHEER_ELASTICSEARCH_INDEX', 'content')
