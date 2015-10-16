@@ -6,7 +6,8 @@ REPOSITORY_ROOT = Path(__file__).ancestor(4)
 
 # This is the root of the Django project, 'cfgov'
 PROJECT_ROOT = REPOSITORY_ROOT.child('cfgov')
-V1_TEMPLATE_ROOT = PROJECT_ROOT.child('jinja2', 'v1')
+WAGTAIL_TEMPLATE_ROOT = PROJECT_ROOT.child('jinja2')
+SHEERLIKE_TEMPLATE_ROOT = PROJECT_ROOT.child('jinja2', 'v1')
 
 SECRET_KEY = os.environ.get('SECRET_KEY', os.urandom(32))
 # Application definition
@@ -73,10 +74,8 @@ TEMPLATES = [
         }
     },
     {
-        'NAME': 'wagtail-env',
         'BACKEND': 'django.template.backends.jinja2.Jinja2',
         'DIRS': [PROJECT_ROOT.child('static_built')],
-        'APP_DIRS': True,
         'OPTIONS': {
             'environment': 'v1.environment'
         }
@@ -147,7 +146,7 @@ ALLOWED_HOSTS = ['*']
 
 WAGTAIL_SITE_NAME = 'v1'
 
-SHEER_SITES = [V1_TEMPLATE_ROOT]
+SHEER_SITES = [WAGTAIL_TEMPLATE_ROOT, SHEERLIKE_TEMPLATE_ROOT]
 SHEER_ELASTICSEARCH_SERVER = os.environ.get('ES_HOST', 'localhost') + ':' + os.environ.get('ES_PORT', '9200')
 SHEER_ELASTICSEARCH_INDEX = os.environ.get('SHEER_ELASTICSEARCH_INDEX', 'content')
 
