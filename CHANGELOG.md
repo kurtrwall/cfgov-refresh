@@ -115,6 +115,10 @@ Given the `MAJOR.MINOR.PATCH` pattern, here is how we decide to increment:
 - Move handlebars dependency to npm from bower.
 - Change Doing Business With Us email to office email
 - Updates `gulp-sitespeedio` from `0.0.6` to `0.0.7`.
+- CFGOVPage to include tags and authors
+- Event import script to include grabbing tags and authors
+- Change templates to move logic to Django backend
+- Move Event filter over to a Django form
 
 ### Removed
 - Removed unused exportsOverride section,
