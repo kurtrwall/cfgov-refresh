@@ -1,5 +1,7 @@
 from django.apps import apps
+from django.template.loader import render_to_string
 from django.utils.encoding import smart_text
+from jinja2 import contextfunction
 from wagtail.contrib.table_block.blocks import TableBlock
 from wagtail.wagtailcore import blocks
 from wagtail.wagtailimages import blocks as images_blocks
@@ -8,6 +10,13 @@ from wagtail.wagtailsnippets.blocks import SnippetChooserBlock
 from . import atoms, molecules
 from ..util import ref
 from ..models.snippets import Contact as ContactSnippetClass
+
+JS_ORGANISMS = [
+    'BaseExpandable',
+    'Expandable',
+    'ExpandableGroup',
+    'FilterControls'
+]
 
 
 class Well(blocks.StructBlock):
@@ -379,22 +388,18 @@ class ItemIntroduction(blocks.StructBlock):
         classname = 'block__flush-top'
 
 
-# TODO: FilterControls/Filterable List should be updated to use same
-#       atomic name used on the frontend of FilterableListControls,
-#       or vice versa.
-class FilterControls(BaseExpandable):
+class FilterableListControls(BaseExpandable):
     form_type = blocks.ChoiceBlock(choices=[
         ('filterable-list', 'Filterable List'),
         ('pdf-generator', 'PDF Generator'),
     ], default='filterable-list')
+    page_type = blocks.ChoiceBlock(choices=ref.page_types, required=False)
     title = blocks.BooleanBlock(default=True, required=False,
                                 label='Filter Title')
     post_date_description = blocks.CharBlock(default='Published')
     categories = blocks.StructBlock([
         ('filter_category', blocks.BooleanBlock(default=True, required=False)),
         ('show_preview_categories', blocks.BooleanBlock(default=True, required=False)),
-        ('page_type', blocks.ChoiceBlock(choices=ref.page_types,
-                                         required=False)),
     ])
     topics = blocks.BooleanBlock(default=True, required=False,
                                  label='Filter Topics')
@@ -402,10 +407,56 @@ class FilterControls(BaseExpandable):
                                   label='Filter Authors')
     date_range = blocks.BooleanBlock(default=True, required=False,
                                      label='Filter Date Range')
+    results_limit = atoms.NumberBlock(default=10,
+                                      help_text='Number of results per page')
+
+    @contextfunction
+    def render(self, context, value, form_id):
+        """
+        Return a text rendering of 'value', suitable for display on templates.
+        By default, this will use a template if a 'template' property is
+        specified on the block, and fall back on render_basic otherwise.
+        """
+        template = getattr(self.meta, 'template', None)
+        if template:
+            context = self.get_context(value, context, form_id)
+            return render_to_string(template, context)
+        else:
+            return self.render_basic(value)
+
+
+    def get_context(self, value, old_context, form_id):
+        # old_context is immutable
+        context = old_context.get_all()
+
+        context['value'] = value
+        context['form_id'] = form_id
+
+        list_handler = self.get_list_handler(value)
+        page, request = context.get('page', None), context.get('request', None)
+        filter_handler = list_handler(page, request, context)
+        filter_handler.process(value, form_id)
+
+        return context
+
+    @staticmethod
+    def get_list_handler(value):
+        from .handlers import filterable_list_controls
+        page_type = value['page_type']
+
+        if page_type == 'newsroom':
+            return filterable_list_controls.NewsroomHandler
+        elif page_type == 'activity-log':
+            return filterable_list_controls.ActivityLogHandler
+        elif page_type == 'event-archive':
+            return filterable_list_controls.EventArchiveHandler
+        else:
+            return filterable_list_controls.GenericHandler
 
     class Meta:
         label = 'Filter Controls'
         icon = 'form'
+        template = 'organisms/filterable-list-controls.html'
 
     class Media:
         js = ['filterable-list-controls.js']

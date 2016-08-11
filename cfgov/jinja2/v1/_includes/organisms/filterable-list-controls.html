@@ -53,22 +53,22 @@
             </div>
         </div>
     {% endif %}
-    {% if controls.categories.filter_category %}
+    {% if controls.categories.filter_category and controls.page_type %}
         <div class="form-l_col
                     form-l_col-1-3">
             <div class="form-group">
                 <label class="form-label-header"
                        for="categories">
-                    {% if 'leadership-calendar' in controls.categories.page_type %}
+                    {% if 'leadership-calendar' in controls.page_type %}
                         Calendars
                         </label>
-                        {% for slug, name in choices_for_page_type(controls.categories.page_type) %}
+                        {% for slug, name in choices_for_page_type(controls.page_type) %}
                             {{ _filter_selectable('radio', index, category_label(slug), 'categories_' ~ slug, 'categories', slug) }}
                         {% endfor %}
                     {% else %}
                         Category
                         </label>
-                        {% for slug, name in choices_for_page_type(controls.categories.page_type) %}
+                        {% for slug, name in choices_for_page_type(controls.page_type) %}
                             {{ _filter_selectable('checkbox', index, category_label(slug), 'categories_' ~ slug, 'categories', slug) }}
                         {% endfor %}
                     {% endif %}
@@ -178,52 +178,48 @@
 {% from 'molecules/notification.html' import render as notification with context %}
 {% from 'organisms/post-preview.html' import render as post_preview with context %}
 
-{% macro render(controls, index) %}
-    <div class="o-filterable-list-controls"
-         id="o-filterable-list-controls-{{ index | string }}">
-        {% set form = filter_data.forms.pop(0) %}
-        {% set posts = filter_data.page_sets.pop(0) %}
-        {% set has_active_filters = page.has_active_filters(request, index) %}
-        {% if has_active_filters %}
-            {% do controls.update({'is_expanded':true}) %}
+<div class="o-filterable-list-controls"
+     id="o-filterable-list-controls-{{ form_id | string }}">
+    {% set is_active = has_active_filters(request, form_id) %}
+    {% if is_active %}
+        {% do value.update({'is_expanded':true}) %}
+    {% endif %}
+    {% set form_markup = _filters_form(value, form, form_id) %}
+    {% call() expandable(value) %}
+        {{ form_markup | safe }}
+    {% endcall %}
+    {% for field in form %}
+        {% if field.errors %}
+            {% for error in field.errors %}
+                {{ notification('error', true, error) }}
+            {% endfor %}
         {% endif %}
-        {% set form_markup = _filters_form(controls, form, index) %}
-        {% call() expandable(controls) %}
-            {{ form_markup | safe }}
-        {% endcall %}
-        {% for field in form %}
-            {% if field.errors %}
-                {% for error in field.errors %}
-                    {{ notification('error', true, error) }}
-                {% endfor %}
-            {% endif %}
+    {% endfor %}
+    {% if form.non_field_errors() %}
+        {% for error in form.non_field_errors() %}
+                {{ notification('error', true, error) }}
         {% endfor %}
-        {% if form.non_field_errors() %}
-            {% for error in form.non_field_errors() %}
-                    {{ notification('error', true, error) }}
-            {% endfor %}
-        {% endif %}
-        {% if 'filterable-list' in controls.form_type and posts is defined %}
-            {% if has_active_filters == false %}
-                {{ notification('success', false, posts.paginator.count ~ ' filtered results') }}
-            {% elif posts.paginator.count == 0 %}
-                {{ notification('warning', true,
-                    'Sorry, there were no results based on your filter selections.',
-                    'Please reset the filter or change your selections and try again.') }}
-            {% else %}
-                {{ notification('success', true, posts.paginator.count ~ ' filtered results') }}
-            {% endif %}
-        {% endif %}
-        {% if controls.categories.page_type == 'activity-log' %}
-            {% import 'activity-log/_activity-list.html' as activity_list with context %}
-            {{ activity_list.render(posts, index) }}
+    {% endif %}
+    {% if 'filterable-list' in value.form_type and posts is defined %}
+        {% if not is_active %}
+            {{ notification('success', false, posts.paginator.count ~ ' filtered results') }}
+        {% elif posts.paginator.count == 0 %}
+            {{ notification('warning', true,
+                'Sorry, there were no results based on your filter selections.',
+                'Please reset the filter or change your selections and try again.') }}
         {% else %}
-            {% for post in posts %}
-                {{ post_preview(post, controls, form_id=index) }}
-            {% endfor %}
+            {{ notification('success', true, posts.paginator.count ~ ' filtered results') }}
         {% endif %}
-        {% import 'molecules/pagination.html' as pagination with context %}
-        {% set fragment_id = 'o-filterable-list-controls-' + index | string %}
-        {{ pagination.render( posts.paginator.num_pages, posts.number, fragment_id, index ) }}
-    </div>
-{% endmacro %}
+    {% endif %}
+    {% if value.page_type == 'activity-log' %}
+        {% import 'activity-log/_activity-list.html' as activity_list with context %}
+        {{ activity_list.render(posts, form_id) }}
+    {% else %}
+        {% for post in posts %}
+            {{ post_preview(post, value, form_id=form_id) }}
+        {% endfor %}
+    {% endif %}
+    {% import 'molecules/pagination.html' as pagination with context %}
+    {% set fragment_id = 'o-filterable-list-controls-' + form_id | string %}
+    {{ pagination.render( posts.paginator.num_pages, posts.number, fragment_id, form_id ) }}
+</div>

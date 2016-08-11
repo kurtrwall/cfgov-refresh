@@ -11,7 +11,7 @@ from django.utils.html import escape
 from wagtail.wagtailcore.models import Page
 from wagtail.wagtailcore import hooks
 
-from v1.models import CFGOVPage
+from .models import CFGOVPage
 
 
 @hooks.register('after_create_page')

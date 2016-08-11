@@ -1,4 +1,4 @@
-import itertools
+from itertools import chain
 
 from django.db import models
 
@@ -10,6 +10,7 @@ from wagtail.wagtailcore.models import PAGE_TEMPLATE_VAR
 
 from .base import CFGOVPage
 from ..atomic_elements import molecules, organisms
+from ..handlers import Handler
 from ..util.util import get_secondary_nav_items
 from jobmanager.models import JobListingTable
 
@@ -31,6 +32,7 @@ class BrowsePage(CFGOVPage):
         ('expandable_group', organisms.ExpandableGroup()),
         ('table', organisms.Table()),
         ('job_listing_table', JobListingTable()),
+        ('filter_controls', organisms.FilterableListControls()),
     ], blank=True)
 
     secondary_nav_exclude_sibling_pages = models.BooleanField(default=False)
@@ -53,6 +55,18 @@ class BrowsePage(CFGOVPage):
     ])
 
     template = 'browse-basic/index.html'
+
+    def get_template(self, request, *args, **kwargs):
+        handler = Handler(self, request, {})
+        blocks_list_dict = handler.get_streamfield_blocks()
+        blocks = chain(*blocks_list_dict.values())
+        for block in blocks:
+            if block.block_type == 'filter_controls':
+                page_type = block.value.get('page_type', '')
+                if page_type == 'newsroom':
+                    return 'newsroom/index.html'
+        return super(BrowsePage, self).get_template(request, *args,
+                                                    **kwargs)
 
     def add_page_js(self, js):
         super(BrowsePage, self).add_page_js(js)

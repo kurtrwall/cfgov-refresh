@@ -8,7 +8,8 @@ from wagtail.wagtailimages.blocks import ImageChooserBlock
 
 from .base import CFGOVPage
 from ..atomic_elements import molecules, organisms
-from ..util import filterable_list, util
+from ..handlers import Handler
+from ..util import util
 from jobmanager.models import JobListingList
 
 class SublandingPage(CFGOVPage):
@@ -29,6 +30,7 @@ class SublandingPage(CFGOVPage):
         ('contact', organisms.MainContactInfo()),
         ('formfield_with_button', molecules.FormFieldWithButton()),
         ('reg_comment', organisms.RegComment()),
+        ('filter_controls', organisms.FilterableListControls()),
     ], blank=True)
     sidebar_breakout = StreamField([
         ('slug', blocks.CharBlock(icon='title')),
@@ -64,6 +66,18 @@ class SublandingPage(CFGOVPage):
     ])
 
     template = 'sublanding-page/index.html'
+
+    def get_template(self, request, *args, **kwargs):
+        handler = Handler(self, request, {})
+        blocks_list_dict = handler.get_streamfield_blocks()
+        blocks = chain(*blocks_list_dict.values())
+        for block in blocks:
+            if block.block_type == 'filter_controls':
+                page_type = block.value.get('page_type', '')
+                if page_type == 'activity-log':
+                    return 'activity-log/index.html'
+        return super(SublandingPage, self).get_template(request, *args,
+                                                        **kwargs)
 
     def get_browsefilterable_posts(self, request, limit):
         filter_pages = [p.specific for p in self.get_appropriate_descendants(request.site.hostname)
