@@ -11,7 +11,8 @@ from django.utils.html import escape
 from wagtail.wagtailcore.models import Page
 from wagtail.wagtailcore import hooks
 
-from v1.models import CFGOVPage
+from .models import CFGOVPage
+from .models.handlers.js_handler import JSHandler
 
 
 @hooks.register('after_create_page')
@@ -126,3 +127,9 @@ class CFGovLinkHandler(object):
 @hooks.register('register_rich_text_link_handler')
 def register_cfgov_link_handler():
     return ('page', CFGovLinkHandler)
+
+
+@hooks.register('cfgov_context_handlers')
+def register_js_handler(*args):
+    handler = JSHandler(*args)
+    handler.process()

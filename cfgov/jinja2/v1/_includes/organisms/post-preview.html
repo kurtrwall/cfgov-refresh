@@ -61,7 +61,7 @@
             </span>
             {# Newsroom Blog category logic #}
             {% if show_categories %}
-                {% if cat_controls and 'newsroom' in cat_controls.page_type and is_blog(post) %}
+                {% if cat_controls.page_type and 'newsroom' in cat_controls.page_type and is_blog(post) %}
                     {{ category_slug.render('blog',
                             page_url,
                             'post_slug meta-header_left',
