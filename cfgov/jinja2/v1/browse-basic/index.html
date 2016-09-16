@@ -1,5 +1,6 @@
 {% extends 'layout-side-nav.html' %}
 
+{% import '_includes/research-conference-registration-form.html' as conference_form with context %}
 {% import 'molecules/featured-content.html' as featured_content %}
 {% import 'templates/render_block.html' as render_block with context %}
 {% import 'templates/streamfield-sidefoot.html' as streamfield_sidefoot with context %}
@@ -21,7 +22,13 @@
     {%- endfor %}
 
     {% for block in page.content -%}
-        {{ render_block.render(block, loop.index) }}
+        {% if block.block_type == 'conference_registration_form' %}
+            {% set form_id = 'form-' ~ 'content-' ~ loop.index0 %}
+            {% set settings = form_modules.content.pop(0) %}
+            {{ conference_form.render(block.value, settings, form_id) }}
+        {% else %}
+            {{ render_block.render(block, loop.index) }}
+        {% endif %}
     {%- endfor %}
 
     {% if page.sidefoot %}

@@ -26,47 +26,32 @@ def govdelivery_subscribe(request):
     the user, then either redirects to an error/success page (non-AJAX) or
     in the case of AJAX, returns some JSON to tell the front-end.
     """
-    passing_response, failing_response = set_responses(request.is_ajax())
-
-    if has_required_params(request):
-        return failing_response if is_ajax else redirect('govdelivery:user_error')
-
+    is_ajax = request.is_ajax()
+    if is_ajax:
+        passing_response = JsonResponse({'result': 'pass'})
+        failing_response = JsonResponse({'result': 'fail'})
+    else:
+        passing_response = redirect('govdelivery:success')
+        failing_response = redirect('govdelivery:server_error')
+    for required_param in REQUIRED_PARAMS_GOVDELIVERY:
+        if required_param not in request.POST or not request.POST.get(required_param):
+            return failing_response if is_ajax else \
+                redirect('govdelivery:user_error')
     email_address = request.POST['email']
     codes = request.POST.getlist('code')
     gd = GovDelivery(account_code=settings.ACCOUNT_CODE)
-
     try:
         subscription_response = gd.set_subscriber_topics(email_address, codes)
         if subscription_response.status_code != 200:
             return failing_response
     except Exception:
         return failing_response
-
-    submit_answers(request, gd)
-
-    return passing_response
-
-def set_response(is_ajax):
-    if is_ajax:
-        passing = JsonResponse({'result': 'pass'})
-        failing = JsonResponse({'result': 'fail'})
-    else:
-        passing = redirect('govdelivery:success')
-        failing = redirect('govdelivery:server_error')
-    return passing, failing
-
-def has_required_params(request):
-    for required_param in REQUIRED_PARAMS_GOVDELIVERY:
-        if required_param not in request.POST or not request.POST.get(required_param):
-            return False
-    return True
-
-def submit_answers(request, gd):
     answers = extract_answers_from_request(request)
     for question_id, answer_text in answers:
         response = gd.set_subscriber_answers_to_question(email_address,
                                                          question_id,
                                                          answer_text)
+    return passing_response
 
 
 REQUIRED_PARAMS_REGSGOV = [

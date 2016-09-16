@@ -1,10 +1,12 @@
 from wagtail.wagtailcore import blocks
+from v1.blocks import AbstractFormBlock
 
-class ConferenceRegistrationForm(blocks.StructBlock):
+
+class ConferenceRegistrationForm(AbstractFormBlock):
     heading = blocks.CharBlock(required=False)
-    code = blocks.CharBlock(required=True)
+    codes = blocks.ListBlock(blocks.CharBlock(label='Code'), label='GovDelivery codes')
     sessions = blocks.ListBlock(blocks.CharBlock(label='Session'), label='Sessions attending')
 
     class Meta:
-        icon = 'form'
+        handler = 'data_research.handlers.ConferenceRegistrationHandler'
         template = '_includes/research-conference-registration-form.html'
