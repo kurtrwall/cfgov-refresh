@@ -1,6 +1,7 @@
 from django.utils.module_loading import import_string
 from django.utils.text import slugify
 from wagtail.wagtailcore import blocks
+from wagtail.wagtaildocs import blocks as doc_blocks
 
 from .util.util import get_unique_id
 
@@ -73,3 +74,8 @@ class Feedback(AbstractFormBlock):
     class Meta:
         handler = 'v1.handlers.blocks.feedback.FeedbackHandler'
         template = '_includes/blocks/feedback.html'
+
+
+class StaticFile(doc_blocks.DocumentChooserBlock):
+    class Meta:
+        template = '_includes/blocks/static-file.html'
